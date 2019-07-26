@@ -5,6 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
+
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/bsonrw"
 
 	"github.com/binance-chain/go-sdk/common/bech32"
 	"github.com/tendermint/tendermint/crypto"
@@ -56,6 +60,33 @@ func (bz *AccAddress) Unmarshal(data []byte) error {
 	return nil
 }
 
+// EncodeValue  for mongodb encode
+func (aa *AccAddress) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	if val.IsNil() {
+		return errors.New("AccAddress encoder value is nil.")
+	}
+
+	if val.IsValid() {
+		bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32Prefixes(), val.Bytes())
+		if err != nil {
+			return err
+		}
+		return vw.WriteString(bech32Addr)
+	}
+	return errors.New("AccAddress encoder value is invalid.")
+}
+
+// DecodeValue negates the value of ID when reading
+func (aa *AccAddress) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+
+	accAddr, err := AccAddressFromBech32(val.String())
+	if err != nil {
+		return err
+	}
+	val.SetBytes(accAddr.Bytes())
+	return nil
+}
+
 // MarshalJSON to Marshals to JSON using Bech32
 func (bz AccAddress) MarshalJSON() ([]byte, error) {
 	return json.Marshal(bz.String())
@@ -75,6 +106,19 @@ func (bz *AccAddress) UnmarshalJSON(data []byte) error {
 	}
 	*bz = bz2
 	return nil
+}
+
+func (bz AccAddress) Bytes() []byte {
+	return bz
+}
+
+// String representation
+func (bz AccAddress) String() string {
+	bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32Prefixes(), bz.Bytes())
+	if err != nil {
+		panic(err)
+	}
+	return bech32Addr
 }
 
 // AccAddressFromHex to create an AccAddress from a hex string
@@ -113,19 +157,6 @@ func GetFromBech32(bech32str, prefix string) ([]byte, error) {
 	}
 
 	return bz, nil
-}
-
-func (bz AccAddress) Bytes() []byte {
-	return bz
-}
-
-// String representation
-func (bz AccAddress) String() string {
-	bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32Prefixes(), bz.Bytes())
-	if err != nil {
-		panic(err)
-	}
-	return bech32Addr
 }
 
 func MustBech32ifyConsPub(pub crypto.PubKey) string {

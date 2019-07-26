@@ -10,6 +10,10 @@ import (
 
 	"github.com/binance-chain/go-sdk/common/bech32"
 	"github.com/tendermint/tendermint/crypto"
+
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"reflect"
 )
 
 type ValAddress []byte
@@ -156,6 +160,29 @@ type UnbondingDelegation struct {
 	Balance        Coin       `json:"balance"`         // atoms to receive at completion
 }
 
+// EncodeValue  for mongodb encode
+func (va *ValAddress) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	fmt.Printf("ValAddress-----EncodeValue----------------------byte:  %v\n", val.Bytes())
+	bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32ValidatorAddrPrefix(), val.Bytes())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("ValAddress--------EncodeValue--------------------string:  %v\n", bech32Addr)
+	return vw.WriteString(bech32Addr)
+}
+
+// DecodeValue negates the value of ID when reading
+func (va *ValAddress) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+
+	valAddr, err := ValAddressFromBech32(val.String())
+	if err != nil {
+		return err
+	}
+
+	val.SetBytes(valAddr.Bytes())
+	return nil
+}
+
 func (va ValAddress) String() string {
 	bech32PrefixValAddr := Network.Bech32ValidatorAddrPrefix()
 	bech32Addr, err := bech32.ConvertAndEncode(bech32PrefixValAddr, va.Bytes())
@@ -262,6 +289,30 @@ func (ca ConsAddress) Empty() bool {
 // compatibility.
 func (ca ConsAddress) Marshal() ([]byte, error) {
 	return ca, nil
+}
+
+// EncodeValue  for mongodb encode
+func (ca *ConsAddress) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	fmt.Printf("ConsAddress-----EncodeValue----------------------byte:  %v\n", val.Bytes())
+	bech32Addr, err := bech32.ConvertAndEncode(bech32PrefixConsAddr, val.Bytes())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("ConsAddress--------EncodeValue--------------------string:  %v\n", bech32Addr)
+	return vw.WriteString(bech32Addr)
+}
+
+// DecodeValue negates the value of ID when reading
+func (ca *ConsAddress) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+
+	consAddr, err := ConsAddressFromBech32(val.String())
+
+	if err != nil {
+		return err
+	}
+
+	val.SetBytes(consAddr.Bytes())
+	return nil
 }
 
 // Unmarshal sets the address to the given data. It is needed for protobuf

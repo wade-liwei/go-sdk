@@ -8,6 +8,10 @@ import (
 	"github.com/binance-chain/go-sdk/common/types"
 	"github.com/pkg/errors"
 	"github.com/tendermint/go-amino"
+
+	"go.mongodb.org/mongo-driver/bson/bsoncodec"
+	"go.mongodb.org/mongo-driver/bson/bsonrw"
+	"reflect"
 )
 
 // name to idetify transaction types
@@ -20,6 +24,25 @@ const (
 )
 
 type VoteOption byte
+
+// EncodeValue  for mongodb encode
+func (vp *VoteOption) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	fmt.Printf("AccAddress-----EncodeValue----------------------byte:  %v\n", val.Uint())
+	vp.Unmarshal([]byte{uint8(val.Uint())})
+	fmt.Printf("AccAddress--------EncodeValue--------------------string:  %v\n", vp.String())
+	return vw.WriteString(vp.String())
+}
+
+// DecodeValue negates the value of ID when reading
+func (vp *VoteOption) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+
+	vote, err := VoteOptionFromString(val.String())
+	if err != nil {
+		return err
+	}
+	val.SetUint(uint64(vote))
+	return nil
+}
 
 //nolint
 const (
@@ -150,6 +173,26 @@ func validProposalType(pt ProposalKind) bool {
 		return true
 	}
 	return false
+}
+
+// EncodeValue  for mongodb encode
+func (pk *ProposalKind) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
+	if val.IsValid() {
+		pk.Unmarshal([]byte{uint8(val.Uint())})
+		return vw.WriteString(pk.String())
+	}
+	return errors.New("ProposalKind encoder val is invalid")
+}
+
+// DecodeValue negates the value of ID when reading
+func (pk *ProposalKind) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
+
+	proposalType, err := ProposalTypeFromString(val.String())
+	if err != nil {
+		return err
+	}
+	val.SetUint(uint64(proposalType))
+	return nil
 }
 
 // Marshal needed for protobuf compatibility

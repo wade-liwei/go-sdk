@@ -3,8 +3,11 @@ package msg
 import (
 	"encoding/json"
 	"fmt"
+	//"reflect"
 
 	"github.com/binance-chain/go-sdk/common/types"
+	// "go.mongodb.org/mongo-driver/bson/bsoncodec"
+	// "go.mongodb.org/mongo-driver/bson/bsonrw"
 )
 
 // SendMsg - high level transaction of the coin module
@@ -20,6 +23,8 @@ func NewMsgSend(in []Input, out []Output) SendMsg {
 
 func (msg SendMsg) Route() string { return "bank" } // TODO: "bank/send"
 func (msg SendMsg) Type() string  { return "send" }
+
+//DecodeValue negates the value of ID when reading
 
 // Implements Msg.
 func (msg SendMsg) ValidateBasic() error {

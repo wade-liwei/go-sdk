@@ -17,13 +17,18 @@ import (
 
 	"github.com/binance-chain/go-sdk/client/rpc"
 	ctypes "github.com/binance-chain/go-sdk/common/types"
+
+	"github.com/binance-chain/go-sdk/types/tx"
+	tendermintCtypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 var (
-	nodeAddr           = "tcp://127.0.0.1:80"
-	badAddr            = "tcp://127.0.0.1:80"
-	testTxHash         = "A27C20143E6B7D8160B50883F81132C1DFD0072FF2C1FE71E0158FBD001E23E4"
-	testTxHeight       = 8669273
+	nodeAddr   = "tcp://dataseed2.binance.org:80"
+	badAddr    = "tcp://127.0.0.1:80"
+	testTxHash = "A27C20143E6B7D8160B50883F81132C1DFD0072FF2C1FE71E0158FBD001E23E4"
+	//testTxHeight       = 21231892
+	//testTxHeight       = 22830954
+	testTxHeight       = 22782162
 	testAddress        = "tbnb1l6vgk5yyxcalm06gdsg55ay4pjkfueazkvwh58"
 	testDelAddr        = "tbnb12hlquylu78cjylk5zshxpdj6hf3t0tahwjt3ex"
 	testTradePair      = "X00-243_BNB"
@@ -53,17 +58,17 @@ func defaultClient() *rpc.HTTP {
 
 func TestRPCGetProposals(t *testing.T) {
 	c := defaultClient()
-	statuses:= []ctypes.ProposalStatus{
+	statuses := []ctypes.ProposalStatus{
 		ctypes.StatusDepositPeriod,
 		ctypes.StatusVotingPeriod,
 		ctypes.StatusPassed,
 		ctypes.StatusRejected,
 	}
-	for _,s:=range statuses{
+	for _, s := range statuses {
 		proposals, err := c.GetProposals(s, 100)
 		assert.NoError(t, err)
-		for _,p:=range proposals{
-			assert.Equal(t,p.GetStatus(),s)
+		for _, p := range proposals {
+			assert.Equal(t, p.GetStatus(), s)
 		}
 		bz, err := json.Marshal(proposals)
 		fmt.Println(string(bz))
@@ -243,12 +248,30 @@ func TestReconnection(t *testing.T) {
 	cmd.Process.Release()
 }
 
-func TestTxSearch(t *testing.T) {
+func TestTxInfoSearch(t *testing.T) {
 	c := defaultClient()
 	tx, err := c.TxInfoSearch(fmt.Sprintf("tx.height=%d", testTxHeight), false, 1, 10)
 	assert.NoError(t, err)
 	bz, err := json.Marshal(tx)
 	fmt.Println(string(bz))
+}
+
+func TestTxSearch(t *testing.T) {
+	c := defaultClient()
+	tx, err := c.TxSearch(fmt.Sprintf("tx.height=%d", testTxHeight), false, 1, 10)
+	assert.NoError(t, err)
+	bz, err := json.Marshal(tx)
+	fmt.Println(string(bz))
+}
+
+func TxInfoSearch() ([]tx.Info, error) {
+	c := defaultClient()
+	return c.TxInfoSearch(fmt.Sprintf("tx.height=%d", testTxHeight), false, 1, 10)
+}
+
+func TxSearch() (*tendermintCtypes.ResultTxSearch, error) {
+	c := defaultClient()
+	return c.TxSearch(fmt.Sprintf("tx.height=%d", testTxHeight), false, 1, 10)
 }
 
 func TestValidators(t *testing.T) {
