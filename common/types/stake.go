@@ -162,13 +162,18 @@ type UnbondingDelegation struct {
 
 // EncodeValue  for mongodb encode
 func (va *ValAddress) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	fmt.Printf("ValAddress-----EncodeValue----------------------byte:  %v\n", val.Bytes())
-	bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32ValidatorAddrPrefix(), val.Bytes())
-	if err != nil {
-		return err
+	if val.IsNil() {
+		return errors.New("ValAddress encoder value is nil.")
 	}
-	fmt.Printf("ValAddress--------EncodeValue--------------------string:  %v\n", bech32Addr)
-	return vw.WriteString(bech32Addr)
+
+	if val.IsValid() {
+		bech32Addr, err := bech32.ConvertAndEncode(Network.Bech32ValidatorAddrPrefix(), val.Bytes())
+		if err != nil {
+			return err
+		}
+		return vw.WriteString(bech32Addr)
+	}
+	return errors.New("ValAddress encoder value is invalid.")
 }
 
 // DecodeValue negates the value of ID when reading
@@ -293,13 +298,19 @@ func (ca ConsAddress) Marshal() ([]byte, error) {
 
 // EncodeValue  for mongodb encode
 func (ca *ConsAddress) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	fmt.Printf("ConsAddress-----EncodeValue----------------------byte:  %v\n", val.Bytes())
-	bech32Addr, err := bech32.ConvertAndEncode(bech32PrefixConsAddr, val.Bytes())
-	if err != nil {
-		return err
+
+	if val.IsNil() {
+		return errors.New("ConsAddress encoder value is nil.")
 	}
-	fmt.Printf("ConsAddress--------EncodeValue--------------------string:  %v\n", bech32Addr)
-	return vw.WriteString(bech32Addr)
+
+	if val.IsValid() {
+		bech32Addr, err := bech32.ConvertAndEncode(bech32PrefixConsAddr, val.Bytes())
+		if err != nil {
+			return err
+		}
+		return vw.WriteString(bech32Addr)
+	}
+	return errors.New("ConsAddress encoder value is invalid.")
 }
 
 // DecodeValue negates the value of ID when reading

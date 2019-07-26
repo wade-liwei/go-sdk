@@ -73,16 +73,16 @@ func TestTxInfoInterface(t *testing.T) {
 
 	//codec -------------------------------------------------------------------------------------------------------
 	rb := bson.NewRegistryBuilder()
-	byteArrCod := &tx.InfoTXInterface{}
+	//byteArrCod := &tx.InfoTXInterface{}
 	tendermintHexCod := &common.HexBytes{}
 	accAddressCod := &types.AccAddress{}
 	votOptionCod := new(txMsg.VoteOption)
 	proposalKindCod := new(txMsg.ProposalKind)
-	rb.RegisterCodec(reflect.TypeOf([]byte("")), byteArrCod)
+	//rb.RegisterCodec(reflect.TypeOf([]byte("")), byteArrCod)
 	rb.RegisterCodec(reflect.TypeOf(common.HexBytes(nil)), tendermintHexCod)
 	rb.RegisterCodec(reflect.TypeOf(types.AccAddress(nil)), accAddressCod)
-	rb.RegisterCodec(reflect.TypeOf(txMsg.VoteOption(byte('0'))), votOptionCod)
-	rb.RegisterCodec(reflect.TypeOf(txMsg.ProposalKind(byte('0'))), proposalKindCod)
+	rb.RegisterCodec(reflect.TypeOf(txMsg.VoteOption('0')), votOptionCod)
+	rb.RegisterCodec(reflect.TypeOf(txMsg.ProposalKind('0')), proposalKindCod)
 
 	collection := client.Database("TxMongodbCodec").Collection("TxMongodbCodec", options.Collection().SetRegistry(rb.Build()))
 	//codec -------------------------------------------------------------------------------------------------------=

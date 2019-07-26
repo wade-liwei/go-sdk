@@ -27,8 +27,8 @@ var (
 	badAddr    = "tcp://127.0.0.1:80"
 	testTxHash = "A27C20143E6B7D8160B50883F81132C1DFD0072FF2C1FE71E0158FBD001E23E4"
 	//testTxHeight       = 21231892
-	//testTxHeight       = 22830954
-	testTxHeight       = 22782162
+	testTxHeight = 22830954
+	//testTxHeight       = 22782162
 	testAddress        = "tbnb1l6vgk5yyxcalm06gdsg55ay4pjkfueazkvwh58"
 	testDelAddr        = "tbnb12hlquylu78cjylk5zshxpdj6hf3t0tahwjt3ex"
 	testTradePair      = "X00-243_BNB"

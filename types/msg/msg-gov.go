@@ -27,10 +27,12 @@ type VoteOption byte
 
 // EncodeValue  for mongodb encode
 func (vp *VoteOption) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
-	fmt.Printf("AccAddress-----EncodeValue----------------------byte:  %v\n", val.Uint())
-	vp.Unmarshal([]byte{uint8(val.Uint())})
-	fmt.Printf("AccAddress--------EncodeValue--------------------string:  %v\n", vp.String())
-	return vw.WriteString(vp.String())
+
+	if val.IsValid() {
+		vp.Unmarshal([]byte{uint8(val.Uint())})
+		return vw.WriteString(vp.String())
+	}
+	return errors.New("VoteOption encoder val is invalid")
 }
 
 // DecodeValue negates the value of ID when reading
