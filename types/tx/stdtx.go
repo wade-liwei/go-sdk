@@ -6,10 +6,12 @@ import (
 	"reflect"
 
 	"github.com/binance-chain/go-sdk/types/msg"
-	"github.com/tendermint/tendermint/abci/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/common"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
+
+	"github.com/tendermint/tendermint/types"
 	// "github.com/binance-chain/go-sdk/common/bech32"
 	//
 	// binanceTypes "github.com/binance-chain/go-sdk/common/types"
@@ -81,10 +83,12 @@ func (tx StdTx) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader,
 }
 
 type InfoTXInterface struct {
-	Hash   common.HexBytes         `json:"hash"`
-	Height int64                   `json:"height"`
-	Tx     interface{}             `json:"tx"`
-	Result types.ResponseDeliverTx `json:"result"`
+	Hash   common.HexBytes        `json:"hash"`
+	Height int64                  `json:"height"`
+	Tx     interface{}            `json:"tx"`
+	Result abci.ResponseDeliverTx `json:"result"`
+	Index  uint32                 `json:"index"`
+	Proof  types.TxProof          `json:"proof,omitempty"`
 }
 
 func (e *InfoTXInterface) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
@@ -106,10 +110,12 @@ func (e *InfoTXInterface) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.Va
 }
 
 type Info struct {
-	Hash   common.HexBytes         `json:"hash"`
-	Height int64                   `json:"height"`
-	Tx     Tx                      `json:"tx"`
-	Result types.ResponseDeliverTx `json:"result"`
+	Hash   common.HexBytes        `json:"hash"`
+	Height int64                  `json:"height"`
+	Tx     Tx                     `json:"tx"`
+	Result abci.ResponseDeliverTx `json:"result"`
+	Index  uint32                 `json:"index"`
+	Proof  types.TxProof          `json:"proof,omitempty"`
 }
 
 func (tx Info) String() string {
