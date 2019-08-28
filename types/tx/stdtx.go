@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/binance-chain/go-sdk/types/msg"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -84,6 +85,7 @@ func (tx StdTx) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader,
 
 type InfoTXInterface struct {
 	Hash   common.HexBytes        `json:"hash"`
+	Time   time.Time              `json:"time"`
 	Height int64                  `json:"height"`
 	Tx     interface{}            `json:"tx"`
 	Result abci.ResponseDeliverTx `json:"result"`
