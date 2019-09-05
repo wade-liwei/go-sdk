@@ -13,9 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
 
 	"github.com/tendermint/tendermint/types"
-	// "github.com/binance-chain/go-sdk/common/bech32"
-	//
-	// binanceTypes "github.com/binance-chain/go-sdk/common/types"
 )
 
 const Source int64 = 2
@@ -49,7 +46,6 @@ func (stdTx StdTx) String() string {
 				Source     : %v
 				Data       : %v
 		`, stdTx.Msgs, stdTx.Signatures, stdTx.Memo, stdTx.Source, stdTx.Data)
-
 }
 
 // NewStdTx to instantiate an instance
@@ -84,13 +80,15 @@ func (tx StdTx) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader,
 }
 
 type InfoTXInterface struct {
-	Hash   common.HexBytes        `json:"hash"`
-	Time   time.Time              `json:"time"`
-	Height int64                  `json:"height"`
-	Tx     interface{}            `json:"tx"`
-	Result abci.ResponseDeliverTx `json:"result"`
-	Index  uint32                 `json:"index"`
-	Proof  types.TxProof          `json:"proof,omitempty"`
+	Hash     common.HexBytes        `json:"hash"`
+	Time     time.Time              `json:"time"`
+	Height   int64                  `json:"height"`
+	Tx       interface{}            `json:"tx"`
+	Result   abci.ResponseDeliverTx `json:"result"`
+	Index    uint32                 `json:"index"`
+	Proof    types.TxProof          `json:"proof,omitempty"`
+	MsgKey   string                 `json:"msg_key"`
+	MsgValue string                 `json:"msg_value"`
 }
 
 func (e *InfoTXInterface) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
@@ -103,11 +101,14 @@ func (e *InfoTXInterface) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.Va
 
 // DecodeValue negates the value of ID when reading
 func (e *InfoTXInterface) DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error {
-	i, err := vr.ReadInt64()
+	txInfoBytesType, b, err := vr.ReadBinary()
+	_ = b
 	if err != nil {
 		return err
 	}
-	val.SetInt(i * -1)
+
+	val.SetBytes(txInfoBytesType)
+
 	return nil
 }
 
