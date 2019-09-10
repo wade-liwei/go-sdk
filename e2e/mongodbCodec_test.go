@@ -8,8 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/binance-chain/go-sdk/common/types"
 	txMsg "github.com/binance-chain/go-sdk/types/msg"
 	"github.com/binance-chain/go-sdk/types/tx"
+	"github.com/tendermint/tendermint/libs/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/bsoncodec"
 	"go.mongodb.org/mongo-driver/bson/bsonrw"
@@ -17,8 +19,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	//"github.com/tendermint/tendermint/libs/common"
-	"github.com/binance-chain/go-sdk/common/types"
-	"github.com/tendermint/tendermint/libs/common"
 )
 
 func TestHexRange(t *testing.T) {

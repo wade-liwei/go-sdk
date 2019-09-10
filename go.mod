@@ -31,4 +31,4 @@ replace github.com/tendermint/go-amino => github.com/binance-chain/bnc-go-amino 
 
 replace github.com/zondax/ledger-go => github.com/binance-chain/ledger-go v0.9.1
 
-replace github.com/tendermint/tendermint => github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.4
+replace github.com/tendermint/tendermint => github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.6

@@ -114,6 +114,10 @@ github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.3 h1:+xqeFPJfPrLYO3HUWbG7
 github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.3/go.mod h1:ToYRsLoLLR7z8bdadajMceFWQGo70vKGw+iGEhcK/jg=
 github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.4 h1:8eAlS348EKOdqvnouC95hOg6XTepQctQ1bA2R3XSBVo=
 github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.4/go.mod h1:ToYRsLoLLR7z8bdadajMceFWQGo70vKGw+iGEhcK/jg=
+github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.5 h1:gst6BLSJjeDRZ1JXHjshpl7519aZbWsM/v7aXbjZFrY=
+github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.5/go.mod h1:ToYRsLoLLR7z8bdadajMceFWQGo70vKGw+iGEhcK/jg=
+github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.6 h1:+ERc6ihIo1mJJj9adjzXbban53+ppNy94ubAfOK3pl8=
+github.com/wade-liwei/tendermint v0.31.2-rc0-crytolynx.6/go.mod h1:ToYRsLoLLR7z8bdadajMceFWQGo70vKGw+iGEhcK/jg=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c h1:u40Z8hqBAAQyv+vATcGgV0YCnDjqSL7/q/JyPhhJSPk=
 github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c/go.mod h1:lB8K/P019DLNhemzwFU4jHLhdvlE6uDZjXFejJXr49I=
 github.com/xdg/stringprep v1.0.0 h1:d9X0esnoa3dFsV0FG35rAT0RIhYFlPq7MiP+DW89La0=
