@@ -21,13 +21,14 @@ type Tx interface {
 
 	// Gets the Msg.
 	GetMsgs() []msg.Msg
+	GetSource() int64
+	GetData() []byte
+	GetMemo() string
+	GetSignatures() []StdSignature
 	//EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error
 	//DecodeValue(ectx bsoncodec.DecodeContext, vr bsonrw.ValueReader, val reflect.Value) error
 }
 
-type MongodbTx interface {
-	Tx
-}
 
 // StdTx def
 type StdTx struct {
@@ -61,6 +62,12 @@ func NewStdTx(msgs []msg.Msg, sigs []StdSignature, memo string, source int64, da
 
 // GetMsgs def
 func (tx StdTx) GetMsgs() []msg.Msg { return tx.Msgs }
+func (tx StdTx) GetSource() int64              { return tx.Source }
+func (tx StdTx) GetData() []byte               { return tx.Data }
+func (tx StdTx) GetMemo() string               { return tx.Memo }
+func (tx StdTx) GetSignatures() []StdSignature { return tx.Signatures }
+
+
 
 func (tx StdTx) EncodeValue(ectx bsoncodec.EncodeContext, vw bsonrw.ValueWriter, val reflect.Value) error {
 	fmt.Printf("codec  encode:   -------------------------------- %v \n", val.Int())
