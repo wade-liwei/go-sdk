@@ -11,6 +11,9 @@ const (
 	AccountStoreName = "acc"
 	TokenStoreName   = "tokens"
 	ParamABCIPrefix  = "param"
+	TimeLockMsgRoute = "timelock"
+
+	TimeLockrcNotFoundErrorCode = 458760
 )
 
 type DexClient interface {
@@ -25,9 +28,11 @@ type DexClient interface {
 	GetFee() ([]types.FeeParam, error)
 	GetOpenOrders(addr types.AccAddress, pair string) ([]types.OpenOrder, error)
 	GetTradingPairs(offset int, limit int) ([]types.TradingPair, error)
-	GetDepth(tradePair string) (*types.OrderBook, error)
+	GetDepth(tradePair string, level int) (*types.OrderBook, error)
 	GetProposals(status types.ProposalStatus, numLatest int64) ([]types.Proposal, error)
 	GetProposal(proposalId int64) (types.Proposal, error)
+	GetTimelocks(addr types.AccAddress) ([]types.TimeLockRecord, error)
+	GetTimelock(addr types.AccAddress, recordID int64) (*types.TimeLockRecord, error)
 }
 
 func (c *HTTP) TxInfoSearch(query string, prove bool, page, perPage int) ([]tx.Info, error) {
@@ -49,6 +54,9 @@ func (c *HTTP) ListAllTokens(offset int, limit int) ([]types.Token, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !result.Response.IsOK(){
+		return nil, fmt.Errorf(result.Response.Log)
+	}
 	bz := result.Response.GetValue()
 	tokens := make([]types.Token, 0)
 	err = c.cdc.UnmarshalBinaryLengthPrefixed(bz, &tokens)
@@ -63,6 +71,9 @@ func (c *HTTP) GetTokenInfo(symbol string) (*types.Token, error) {
 	result, err := c.ABCIQuery(path, nil)
 	if err != nil {
 		return nil, err
+	}
+	if !result.Response.IsOK(){
+		return nil, fmt.Errorf(result.Response.Log)
 	}
 	bz := result.Response.GetValue()
 	token := new(types.Token)
@@ -130,7 +141,7 @@ func (c *HTTP) GetBalances(addr types.AccAddress) ([]types.TokenBalance, error) 
 
 	symbs := make([]string, 0, len(coins))
 	bals := make([]types.TokenBalance, 0, len(coins))
-	for _,coin := range coins {
+	for _, coin := range coins {
 		symbs = append(symbs, coin.Denom)
 		// count locked and frozen coins
 		var locked, frozen int64
@@ -180,6 +191,9 @@ func (c *HTTP) GetFee() ([]types.FeeParam, error) {
 	if err != nil {
 		return nil, err
 	}
+	if !rawFee.Response.IsOK(){
+		return nil, fmt.Errorf(rawFee.Response.Log)
+	}
 	var fees []types.FeeParam
 	err = c.cdc.UnmarshalBinaryLengthPrefixed(rawFee.Response.GetValue(), &fees)
 	return fees, err
@@ -192,6 +206,9 @@ func (c *HTTP) GetOpenOrders(addr types.AccAddress, pair string) ([]types.OpenOr
 	rawOrders, err := c.ABCIQuery(fmt.Sprintf("dex/openorders/%s/%s", pair, addr), nil)
 	if err != nil {
 		return nil, err
+	}
+	if !rawOrders.Response.IsOK(){
+		return nil, fmt.Errorf(rawOrders.Response.Log)
 	}
 	bz := rawOrders.Response.GetValue()
 	openOrders := make([]types.OpenOrder, 0)
@@ -216,6 +233,9 @@ func (c *HTTP) GetTradingPairs(offset int, limit int) ([]types.TradingPair, erro
 	if err != nil {
 		return nil, err
 	}
+	if !rawTradePairs.Response.IsOK(){
+		return nil, fmt.Errorf(rawTradePairs.Response.Log)
+	}
 	pairs := make([]types.TradingPair, 0)
 	if rawTradePairs.Response.GetValue() == nil {
 		return pairs, nil
@@ -224,13 +244,19 @@ func (c *HTTP) GetTradingPairs(offset int, limit int) ([]types.TradingPair, erro
 	return pairs, err
 }
 
-func (c *HTTP) GetDepth(tradePair string) (*types.OrderBook, error) {
+func (c *HTTP) GetDepth(tradePair string, level int) (*types.OrderBook, error) {
 	if err := ValidatePair(tradePair); err != nil {
 		return nil, err
 	}
-	rawDepth, err := c.ABCIQuery(fmt.Sprintf("dex/orderbook/%s", tradePair), nil)
+	if err := ValidateDepthLevel(level); err != nil {
+		return nil, err
+	}
+	rawDepth, err := c.ABCIQuery(fmt.Sprintf("dex/orderbook/%s/%d", tradePair, level), nil)
 	if err != nil {
 		return nil, err
+	}
+	if !rawDepth.Response.IsOK(){
+		return nil, fmt.Errorf(rawDepth.Response.Log)
 	}
 	var ob types.OrderBook
 	err = c.cdc.UnmarshalBinaryLengthPrefixed(rawDepth.Response.GetValue(), &ob)
@@ -238,6 +264,71 @@ func (c *HTTP) GetDepth(tradePair string) (*types.OrderBook, error) {
 		return nil, err
 	}
 	return &ob, nil
+}
+
+func (c *HTTP) GetTimelocks(addr types.AccAddress) ([]types.TimeLockRecord, error) {
+
+	params := types.QueryTimeLocksParams{
+		Account: addr,
+	}
+
+	bz, err := c.cdc.MarshalJSON(params)
+
+	if err != nil {
+		fmt.Errorf("marshal params failed %v", err)
+	}
+
+	rawRecords, err := c.ABCIQuery(fmt.Sprintf("custom/%s/%s", TimeLockMsgRoute, "timelocks"), bz)
+
+	if err != nil {
+		return nil, err
+	}
+	if rawRecords == nil {
+		return nil, fmt.Errorf("zero records")
+	}
+	if !rawRecords.Response.IsOK(){
+		return nil, fmt.Errorf(rawRecords.Response.Log)
+	}
+	records := make([]types.TimeLockRecord, 0)
+
+	if err = c.cdc.UnmarshalJSON(rawRecords.Response.GetValue(), &records); err != nil {
+		return nil, err
+	} else {
+		return records, nil
+	}
+
+}
+
+func (c *HTTP) GetTimelock(addr types.AccAddress, recordID int64) (*types.TimeLockRecord, error) {
+
+	params := types.QueryTimeLockParams{
+		Account: addr,
+		Id:      recordID,
+	}
+
+	bz, err := c.cdc.MarshalJSON(params)
+
+	if err != nil {
+		return nil, fmt.Errorf("incorrectly formatted request data %s", err.Error())
+	}
+
+	rawRecord, err := c.ABCIQuery(fmt.Sprintf("custom/%s/%s", TimeLockMsgRoute, "timelock"), bz)
+
+	if err != nil {
+		return nil, fmt.Errorf("error query %s", err.Error())
+	}
+	if rawRecord.Response.Code == TimeLockrcNotFoundErrorCode {
+		return nil, nil
+	}
+	var record types.TimeLockRecord
+
+	err = c.cdc.UnmarshalJSON(rawRecord.Response.GetValue(), &record)
+	if err != nil {
+		return nil, err
+	}
+
+	return &record, nil
+
 }
 
 func (c *HTTP) GetProposals(status types.ProposalStatus, numLatest int64) ([]types.Proposal, error) {
@@ -257,6 +348,9 @@ func (c *HTTP) GetProposals(status types.ProposalStatus, numLatest int64) ([]typ
 	if err != nil {
 		return nil, err
 	}
+	if !rawProposals.Response.IsOK(){
+		return nil, fmt.Errorf(rawProposals.Response.Log)
+	}
 	proposals := make([]types.Proposal, 0)
 
 	err = c.cdc.UnmarshalJSON(rawProposals.Response.GetValue(), &proposals)
@@ -271,14 +365,16 @@ func (c *HTTP) GetProposal(proposalId int64) (types.Proposal, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(bz))
-	rawProposals, err := c.ABCIQuery("custom/gov/proposal", bz)
+	rawProposal, err := c.ABCIQuery("custom/gov/proposal", bz)
 	if err != nil {
 		return nil, err
 	}
+	if !rawProposal.Response.IsOK(){
+		return nil, fmt.Errorf(rawProposal.Response.Log)
+	}
 	var proposal types.Proposal
 
-	err = c.cdc.UnmarshalJSON(rawProposals.Response.GetValue(), &proposal)
+	err = c.cdc.UnmarshalJSON(rawProposal.Response.GetValue(), &proposal)
 	return proposal, err
 }
 

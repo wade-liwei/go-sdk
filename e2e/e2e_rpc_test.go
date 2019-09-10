@@ -74,6 +74,27 @@ func TestRPCGetProposals(t *testing.T) {
 		fmt.Println(string(bz))
 	}
 }
+func TestRPCGetTimelocks(t *testing.T) {
+	c := defaultClient()
+	acc, err := ctypes.AccAddressFromBech32(testAddress)
+	assert.NoError(t, err)
+	records, err := c.GetTimelocks(acc)
+	assert.NoError(t, err)
+	fmt.Println(len(records))
+	for _, record := range records {
+		fmt.Println(record)
+	}
+}
+
+func TestRPCGetTimelock(t *testing.T) {
+	c := defaultClient()
+	acc, err := ctypes.AccAddressFromBech32(testAddress)
+	assert.NoError(t, err)
+	record, err := c.GetTimelock(acc, 1)
+	assert.NoError(t, err)
+	fmt.Println(record)
+
+}
 
 func TestRPCGetProposal(t *testing.T) {
 	c := defaultClient()
@@ -451,7 +472,7 @@ func TestGetTradePair(t *testing.T) {
 
 func TestGetDepth(t *testing.T) {
 	c := defaultClient()
-	depth, err := c.GetDepth(testTradePair)
+	depth, err := c.GetDepth(testTradePair, 2)
 	assert.NoError(t, err)
 	bz, err := json.Marshal(depth)
 	fmt.Println(string(bz))

@@ -25,6 +25,8 @@ type TransactionClient interface {
 	TimeLock(description string, amount types.Coins, lockTime int64, sync bool, options ...Option) (*TimeLockResult, error)
 	TimeUnLock(id int64, sync bool, options ...Option) (*TimeUnLockResult, error)
 	TimeReLock(id int64, description string, amount types.Coins, lockTime int64, sync bool, options ...Option) (*TimeReLockResult, error)
+	SetAccountFlags(flags uint64, sync bool, options ...Option) (*SetAccountFlagsResult, error)
+	AddAccountFlags(flagOptions []types.FlagOption, sync bool, options ...Option) (*SetAccountFlagsResult, error)
 
 	SubmitListPairProposal(title string, param msg.ListTradingPairParams, initialDeposit int64, votingPeriod time.Duration, sync bool, options ...Option) (*SubmitProposalResult, error)
 	SubmitProposal(title string, description string, proposalType msg.ProposalKind, initialDeposit int64, votingPeriod time.Duration, sync bool, options ...Option) (*SubmitProposalResult, error)
@@ -65,18 +67,20 @@ func WithMemo(memo string) Option {
 	}
 }
 
-func (c *client) broadcastMsg(m msg.Msg, sync bool, options ...Option) (*tx.TxCommitResult, error) {
-	fromAddr := c.keyManager.GetAddr()
-	acc, err := c.queryClient.GetAccount(fromAddr.String())
-	if err != nil {
-		return nil, err
+func WithAcNumAndSequence(accountNum, seq int64) Option {
+	return func(txMsg *tx.StdSignMsg) *tx.StdSignMsg {
+		txMsg.Sequence = seq
+		txMsg.AccountNumber = accountNum
+		return txMsg
 	}
-	sequence := acc.Sequence
+}
+
+func (c *client) broadcastMsg(m msg.Msg, sync bool, options ...Option) (*tx.TxCommitResult, error) {
 	// prepare message to sign
 	signMsg := &tx.StdSignMsg{
 		ChainID:       c.chainId,
-		AccountNumber: acc.Number,
-		Sequence:      sequence,
+		AccountNumber: -1,
+		Sequence:      -1,
 		Memo:          "",
 		Msgs:          []msg.Msg{m},
 		Source:        tx.Source,
@@ -84,6 +88,28 @@ func (c *client) broadcastMsg(m msg.Msg, sync bool, options ...Option) (*tx.TxCo
 
 	for _, op := range options {
 		signMsg = op(signMsg)
+	}
+
+	if signMsg.Sequence == -1 || signMsg.AccountNumber == -1 {
+		fromAddr := c.keyManager.GetAddr()
+		acc, err := c.queryClient.GetAccount(fromAddr.String())
+		if err != nil {
+			return nil, err
+		}
+		signMsg.Sequence = acc.Sequence
+		signMsg.AccountNumber = acc.Number
+	}
+
+	// special logic for createOrder, to save account query
+	if orderMsg, ok := m.(msg.CreateOrderMsg); ok {
+		orderMsg.ID = msg.GenerateOrderID(signMsg.Sequence+1, c.keyManager.GetAddr())
+		signMsg.Msgs[0] = orderMsg
+	}
+
+	for _, m := range signMsg.Msgs {
+		if err := m.ValidateBasic(); err != nil {
+			return nil, err
+		}
 	}
 
 	// Hex encoded signed transaction, ready to be posted to BncChain API

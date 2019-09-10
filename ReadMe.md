@@ -53,6 +53,8 @@ NewKeyManager() (KeyManager, error)
 
 NewMnemonicKeyManager(mnemonic string) (KeyManager, error)
 
+NewMnemonicPathKeyManager(mnemonic, keyPath string) (KeyManager, error) 
+
 NewKeyStoreKeyManager(file string, auth string) (KeyManager, error)
 
 NewPrivateKeyManager(priKey string) (KeyManager, error) 
@@ -62,6 +64,7 @@ NewLedgerKeyManager(path ledger.DerivationPath) (KeyManager, error)
 ```
 - NewKeyManager. You will get a new private key without provide anything, you can export and save this `KeyManager`.
 - NewMnemonicKeyManager. You should provide your mnemonic, usually is a string of 24 words.
+- NewMnemonicPathKeyManager. The difference between `NewMnemonicKeyManager` is that you can use custom keypath to generate different `keyManager` while using the same mnemonic. 5 levels in BIP44 path: "purpose' / coin_type' / account' / change / address_index", "purpose' / coin_type'" is fixed as "44'/714'/", you can customize the rest part. 
 - NewKeyStoreKeyManager. You should provide a keybase json file and you password, you can download the key base json file when your create a wallet account.
 - NewPrivateKeyManager. You should provide a Hex encoded string of your private key.
 - NewLedgerKeyManager. You must have a ledger device with binance ledger app and connect it to your machine.
@@ -145,6 +148,19 @@ If you want broadcast some transactions, like send coins, create orders or cance
 Create a `buy` order: 
 ```go
 createOrderResult, err := client.CreateOrder(tradeSymbol, nativeSymbol, txmsg.OrderSide.BUY, 100000000, 100000000, true)
+```
+
+If want to attach memo or source to the transaction, more `WithSource` and `WithMemo` options are required:
+```go
+createOrderResult, err := client.CreateOrder(tradeSymbol, nativeSymbol, msg.OrderSide.BUY, 100000000, 100000000, true, transaction.WithSource(100),transaction.WithMemo("test memo"))
+```
+
+In some scenarios, continuously send multi transactions very fast. Before the previous transaction being included in the chain, the next transaction is being sent, to avoid sequence mismatch error, option `WithAcNumAndSequence` is required:
+```
+acc,err:=client.GetAccount(client.GetKeyManager().GetAddr().String())
+_, err = client.CreateOrder(tradeSymbol, nativeSymbol, msg.OrderSide.BUY, 100000000, 100000000, true, transaction.WithAcNumAndSequence(acc.Number,acc.Sequence))
+_, err = client.CreateOrder(tradeSymbol, nativeSymbol, msg.OrderSide.BUY, 100000000, 100000000, true, transaction.WithAcNumAndSequence(acc.Number,acc.Sequence+1))
+_, err = client.CreateOrder(tradeSymbol, nativeSymbol, msg.OrderSide.BUY, 100000000, 100000000, true, transaction.WithAcNumAndSequence(acc.Number,acc.Sequence+2))
 ```
 
 For more API usage documentation, please check the [wiki](https://github.com/binance-chain/go-sdk/wiki)..
