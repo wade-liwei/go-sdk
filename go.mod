@@ -1,5 +1,7 @@
 module github.com/binance-chain/go-sdk
 
+go 1.14
+
 require (
 	github.com/binance-chain/ledger-cosmos-go v0.9.9-binance.1
 	github.com/btcsuite/btcd v0.0.0-20181013004428-67e573d211ac

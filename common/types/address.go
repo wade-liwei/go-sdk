@@ -35,7 +35,7 @@ func (this ChainNetwork) Bech32Prefixes() string {
 	case TestNetwork:
 		return "tbnb"
 	case ProdNetwork:
-		return "bnb"
+		return "halle"
 	default:
 		panic("Unknown network type")
 	}
