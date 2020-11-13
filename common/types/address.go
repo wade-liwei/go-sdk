@@ -31,14 +31,15 @@ const (
 var Network = ProdNetwork
 
 func (this ChainNetwork) Bech32Prefixes() string {
-	switch this {
-	case TestNetwork:
-		return "tbnb"
-	case ProdNetwork:
-		return "halle"
-	default:
-		panic("Unknown network type")
-	}
+	return "halle"
+	// switch this {
+	// case TestNetwork:
+	// 	return "tbnb"
+	// case ProdNetwork:
+	// 	return "halle"
+	// default:
+	// 	panic("Unknown network type")
+	// }
 }
 
 func (this ChainNetwork) Bech32ValidatorAddrPrefix() string {
